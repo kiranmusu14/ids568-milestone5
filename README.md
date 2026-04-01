@@ -1,123 +1,104 @@
-# LLM Inference Server — Milestone 5
+# LLM Inference Server
 
-Production-ready LLM inference API with **dynamic request batching** and **privacy-preserving response caching**.
+High-throughput LLM inference API with dynamic batching and caching.
 
 ---
 
-## Quick Start (under 5 minutes)
+## Features
+
+- **Dynamic batching** — groups concurrent requests into GPU batches using a hybrid size-or-timeout trigger, reducing per-request latency as batch size grows.
+- **Response caching** — LRU + TTL in-memory cache eliminates redundant inference calls for repeated prompts.
+- **Privacy-preserving cache keys** — cache keys are SHA-256 hashes of `(prompt + model + params)`. No user identifiers, IPs, or session tokens are ever stored.
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.10+
+- Redis (optional — default cache is in-memory)
+- GPU recommended for production; simulated backend works on CPU
+
+### Installation
 
 ```bash
 # 1. Clone and enter the repo
 cd ids568-milestone5
 
-# 2. Create and activate virtual environment
+# 2. Create and activate a virtual environment
 python3 -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 
 # 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Start the inference server (defaults: port 8000, batch_size=8, TTL=300s)
-python -m uvicorn src.server:app --host 0.0.0.0 --port 8000
-
-# 5. Test the server
-curl -X POST http://localhost:8000/generate \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": "Explain transformer attention mechanisms", "max_tokens": 128}'
+# 4. Copy and configure environment variables
+cp .env.example .env
+# Edit .env to match your setup
 ```
 
----
+### Configuration via `.env`
 
-## Repository Structure
+All tunable parameters are read from environment variables with the `LLM_` prefix. Copy `.env.example` to `.env` and adjust as needed. No code changes required per environment.
 
-```
-ids568-milestone5/
-├── src/
-│   ├── server.py          # FastAPI inference server (batching + caching)
-│   ├── batching.py        # Dynamic request batcher (hybrid size+timeout)
-│   ├── caching.py         # In-process LRU+TTL cache (SHA-256 keys, no PII)
-│   └── config.py          # Pydantic configuration (env-var overridable)
-├── benchmarks/
-│   ├── run_benchmarks.py  # Benchmark orchestration (--help supported)
-│   ├── load_generator.py  # Async load generator (configurable concurrency)
-│   └── results/           # Raw JSON benchmark data
-├── analysis/
-│   ├── generate_reports.py     # Generates charts + PDFs from results
-│   ├── performance_report.pdf  # 4-page performance analysis
-│   ├── governance_memo.pdf     # 1-page governance considerations
-│   └── visualizations/         # PNG charts (6 figures)
-├── requirements.txt
-└── README.md
-```
-
----
-
-## Configuration
-
-All parameters can be set via environment variables (prefix `LLM_`) or a `.env` file.
-
-| Environment Variable | Default | Description |
+| Variable | Default | Description |
 |---|---|---|
+| `LLM_MODEL_NAME` | `simulated-llm-7b` | Model identifier |
 | `LLM_MAX_BATCH_SIZE` | `8` | Max requests per batch |
 | `LLM_BATCH_TIMEOUT_MS` | `50.0` | Max wait (ms) to fill a batch |
 | `LLM_CACHE_TTL_SECONDS` | `300.0` | Cache entry time-to-live |
 | `LLM_CACHE_MAX_ENTRIES` | `1000` | Max LRU cache entries |
-| `LLM_MODEL_NAME` | `simulated-llm-7b` | Model identifier |
 | `LLM_HOST` | `0.0.0.0` | Bind address |
 | `LLM_PORT` | `8000` | Listen port |
 
-**Example — tune for low-latency workload:**
+---
+
+## Running the Server
+
+### Development mode (auto-reload on file changes)
+
 ```bash
-LLM_MAX_BATCH_SIZE=4 LLM_BATCH_TIMEOUT_MS=25 python -m uvicorn src.server:app
+python -m uvicorn src.server:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-**Example — tune for high-throughput workload:**
+### Production mode
+
 ```bash
-LLM_MAX_BATCH_SIZE=16 LLM_BATCH_TIMEOUT_MS=100 python -m uvicorn src.server:app
+python -m uvicorn src.server:app --host 0.0.0.0 --port 8000 --workers 1 --log-level info
 ```
+
+> Note: use `--workers 1` — the batcher and cache are in-process singletons; multiple workers would not share state.
 
 ---
 
-## API Endpoints
+## API Usage
 
-### `POST /generate`
-Submit a prompt for inference (batched + cached).
+### `POST /generate` — submit a prompt for inference
 
-**Request:**
-```json
-{
-  "prompt": "Explain transformer attention mechanisms",
-  "max_tokens": 256,
-  "temperature": 0.7
-}
+```bash
+curl -X POST http://localhost:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Explain transformer attention", "max_tokens": 128, "temperature": 0.7}'
 ```
 
-**Response:**
-```json
-{
-  "response": "[simulated-llm-7b] Response to: ...",
-  "cached": false,
-  "batch_size": 4,
-  "latency_ms": 37.2,
-  "tokens_generated": 128,
-  "model": "simulated-llm-7b"
-}
+### `GET /health` — liveness probe
+
+```bash
+curl http://localhost:8000/health
 ```
 
-### `GET /health`
-Liveness probe — returns `{"status": "ok"}`.
+### `GET /stats` — real-time batching and caching metrics
 
-### `GET /stats`
-Real-time batching and caching metrics:
-```json
-{
-  "batching": {"total_requests": 500, "avg_batch_size": 5.2, ...},
-  "caching":  {"hits": 312, "misses": 188, "hit_rate": 0.624, ...}
-}
+```bash
+curl http://localhost:8000/stats
 ```
 
-### `POST /cache/clear`
-Flush all cache entries (admin use / GDPR erasure).
+### `POST /cache/clear` — flush all cache entries
+
+```bash
+curl -X POST http://localhost:8000/cache/clear
+```
 
 ---
 
@@ -126,98 +107,104 @@ Flush all cache entries (admin use / GDPR erasure).
 The benchmark suite requires the server to be running:
 
 ```bash
-# Terminal 1: start server
-source venv/bin/activate
+# Terminal 1 — start the server
 python -m uvicorn src.server:app --port 8000 --log-level warning
 
-# Terminal 2: run all scenarios
-source venv/bin/activate
+# Terminal 2 — run all benchmark scenarios
 python benchmarks/run_benchmarks.py --scenario all
 
 # Run a specific scenario
+python benchmarks/run_benchmarks.py --scenario batch
 python benchmarks/run_benchmarks.py --scenario cache
-python benchmarks/run_benchmarks.py --scenario throughput --server-url http://localhost:8000
+python benchmarks/run_benchmarks.py --scenario throughput
+
+# Custom load test (example: 32 concurrent users, 200 total requests)
+python benchmarks/load_generator.py --concurrency 32 --num-requests 200
 ```
-
-**Scenarios:**
-
-| Scenario | Description |
-|---|---|
-| `single` | Baseline sequential latency (no batching) |
-| `batch` | Batching amortisation — varied concurrency levels |
-| `cache` | Cold vs. warm cache latency comparison |
-| `throughput` | Req/s at low (c=4), medium (c=16), high (c=32) load |
-| `all` | Run all scenarios (default) |
 
 Results are saved as JSON to `benchmarks/results/`.
 
 ---
 
-## Generating Analysis Reports
-
-After running benchmarks:
+## Running Tests
 
 ```bash
-python analysis/generate_reports.py
+pip install pytest pytest-asyncio
+pytest tests/
 ```
-
-This produces:
-- `analysis/visualizations/fig1_*.png` through `fig6_*.png`
-- `analysis/performance_report.pdf` (4-page analysis)
-- `analysis/governance_memo.pdf` (1-page governance memo)
 
 ---
 
-## Design Decisions
-
-### Batching Strategy: Hybrid (Size OR Timeout)
-Requests are dispatched when **either** `max_batch_size` requests accumulate **or** `batch_timeout_ms` elapses — whichever fires first. This balances:
-- **Throughput**: larger batches amortise the GPU base cost across more requests.
-- **Latency**: no request waits longer than `batch_timeout_ms` for a batch to fill.
-
-### Cache Key Design (Privacy-Preserving)
-Cache keys are `SHA-256(prompt + model_name + generation_params)`. No user identifier, IP address, or session token is ever stored. See `src/caching.py:InferenceCache.make_key`.
-
-### Concurrency Safety
-- The `DynamicBatcher` uses `asyncio.Queue` (producer-safe for multiple concurrent coroutines) and a single background consumer task that owns all batch-formation state — no additional locks needed for batching logic.
-- The `InferenceCache` guards all mutations with `asyncio.Lock` to prevent race conditions on concurrent cache reads/writes.
-
-### Simulated Inference Backend
-The server uses a simulated inference model (`asyncio.sleep` with realistic latency math) so benchmarks run without GPU hardware. The latency model accurately represents GPU batching amortisation:
+## Project Structure
 
 ```
-total_batch_time = base_latency + N × per_request_latency × amortization_factor
-per_request_time = total_batch_time / N
+ids568-milestone5/
+├── src/
+│   ├── __init__.py
+│   ├── server.py          # FastAPI application entrypoint
+│   ├── batching.py        # Dynamic batching logic
+│   ├── caching.py         # Cache implementation (in-memory LRU+TTL)
+│   ├── inference.py       # Model loading and inference
+│   ├── config.py          # Configuration management
+│   └── models.py          # Pydantic request/response schemas
+├── benchmarks/
+│   ├── run_benchmarks.py  # Benchmark orchestration script
+│   ├── load_generator.py  # Synthetic load generation
+│   └── results/           # Raw benchmark data
+├── tests/
+│   ├── test_batching.py   # Unit tests for batcher
+│   ├── test_caching.py    # Unit tests for cache
+│   └── test_integration.py # End-to-end API tests
+├── analysis/
+│   ├── performance_report.pdf  # Main analysis document
+│   ├── governance_memo.pdf     # Governance considerations
+│   └── visualizations/         # Charts and graphs
+├── requirements.txt
+├── pyproject.toml
+├── .env.example
+└── README.md
 ```
-
-At `N=1`: ~112 ms/request. At `N=8`: ~25 ms/request (4.5× improvement).
 
 ---
 
-## Automated Sanity Checks
+## Environment File Template
 
 ```bash
-# File existence
-test -f src/server.py && echo "OK" || echo "MISSING"
-test -f src/batching.py && echo "OK" || echo "MISSING"
-test -f src/caching.py && echo "OK" || echo "MISSING"
-test -f src/config.py && echo "OK" || echo "MISSING"
+# .env.example - Copy to .env and customize
 
-# Python syntax
-python -m py_compile src/server.py && echo "syntax OK"
-python -m py_compile src/batching.py && echo "syntax OK"
-python -m py_compile src/caching.py && echo "syntax OK"
-python -m py_compile src/config.py && echo "syntax OK"
+# Model Configuration
+LLM_MODEL_NAME=meta-llama/Llama-2-7b-hf
+LLM_MAX_TOKENS=256
+LLM_TEMPERATURE=0.0
 
-# Server import
-python -c "from src.server import app; print('imports OK')"
+# Batching Configuration
+LLM_MAX_BATCH_SIZE=8
+LLM_BATCH_TIMEOUT_MS=50
 
-# Benchmark --help
-python benchmarks/run_benchmarks.py --help
+# Caching Configuration
+LLM_REDIS_URL=redis://localhost:6379
+LLM_CACHE_TTL_SECONDS=3600
+LLM_CACHE_MAX_ENTRIES=10000
 
-# No PII in caching module
-grep -n "user_id\|user_name\|email\|username" src/caching.py || echo "No PII found"
-
-# Asyncio patterns present
-grep -n "asyncio.Lock\|async def\|await" src/server.py src/batching.py
+# Server Configuration
+LLM_HOST=0.0.0.0
+LLM_PORT=8000
 ```
+
+---
+
+## Common Pitfalls
+
+**Hardcoded configuration.** Use environment variables for all tunable parameters. This enables different settings per environment without code changes.
+
+**Missing `__init__.py`.** Required for Python to recognize directories as packages. Without it, imports will fail.
+
+**No type hints.** Type annotations improve readability and enable better IDE support. They also help catch bugs before runtime.
+
+**Undocumented dependencies.** Always keep `requirements.txt` updated with pinned versions. This ensures reproducible deployments.
+
+---
+
+## License
+
+MIT

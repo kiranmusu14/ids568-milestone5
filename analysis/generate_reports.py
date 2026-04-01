@@ -313,7 +313,45 @@ def fig6_cache_size_vs_hitrate(hitrate_data: dict) -> Path:
 # PDF: Performance Report
 # ---------------------------------------------------------------------------
 
-def build_performance_report(figs: dict) -> Path:
+def build_performance_report(figs: dict, batch_data: dict, cache_data: dict,
+                              hitrate_data: dict, throughput_data: dict) -> Path:
+    # ------------------------------------------------------------------
+    # Derive all metrics from benchmark data — no hardcoded numbers
+    # ------------------------------------------------------------------
+    b_results = batch_data["results"]
+    rps_min   = b_results[0]["throughput_rps"]
+    rps_max   = b_results[-1]["throughput_rps"]
+    c_min     = b_results[0]["concurrency"]
+    c_max     = b_results[-1]["concurrency"]
+    batch_gain = rps_max / rps_min
+
+    cold_p50  = cache_data["cold"]["latency_ms"]["p50"]
+    warm_p50  = cache_data["warm"]["latency_ms"]["p50"]
+    cold_rps  = cache_data["cold"]["throughput_rps"]
+    warm_rps  = cache_data["warm"]["throughput_rps"]
+    lat_reduction = cold_p50 / warm_p50
+    tput_improvement = warm_rps / cold_rps
+
+    snaps = hitrate_data["snapshots"]
+    final_hit_rate   = snaps[-1]["hit_rate_cumulative"] * 100
+    first_p50_lat    = snaps[0]["latency_p50"]
+
+    tp_results  = throughput_data["results"]
+    tp_low      = next(r for r in tp_results if r["load_level"] == "low")
+    tp_high     = next(r for r in tp_results if r["load_level"] == "high")
+    tp_low_rps  = tp_low["throughput_rps"]
+    tp_high_rps = tp_high["throughput_rps"]
+    tp_p50_min  = min(r["latency_ms"]["p50"] for r in tp_results)
+    tp_p50_max  = max(r["latency_ms"]["p50"] for r in tp_results)
+    tp_high_c   = tp_high["concurrency"]
+    tp_low_c    = tp_low["concurrency"]
+
+    cold_p50_ms     = round(cold_p50)
+    warm_p50_ms     = round(warm_p50, 1)
+    cold_rps_int    = round(cold_rps)
+    warm_rps_int    = round(warm_rps)
+
+    # ------------------------------------------------------------------
     out = ANALYSIS_DIR / "performance_report.pdf"
     doc = SimpleDocTemplate(
         str(out), pagesize=letter,
@@ -365,14 +403,14 @@ def build_performance_report(figs: dict) -> Path:
     story.append(Spacer(1, 0.05 * inch))
     story.append(Paragraph("<b>Key findings:</b>", body))
     findings = [
-        "Dynamic batching improved throughput from ~6.3 req/s (sequential) to "
-        "~56.4 req/s at concurrency=16 — an <b>8.9× throughput gain</b>.",
-        "Response caching reduced p50 latency from ~227 ms (cold) to ~12 ms (warm) — "
-        "a <b>19× latency reduction</b> for repeated prompts.",
-        "Cache hit rate reached <b>64% cumulative</b> after 200 requests under a "
-        "realistic 40% unique-prompt workload.",
-        "System remained stable with zero errors across 100 concurrent requests "
-        "(high-load throughput scenario).",
+        f"Dynamic batching improved throughput from ~{rps_min:.1f} req/s (sequential, c={c_min}) to "
+        f"~{rps_max:.1f} req/s at concurrency={c_max} — a <b>{batch_gain:.1f}× throughput gain</b>.",
+        f"Response caching reduced p50 latency from ~{cold_p50_ms} ms (cold cache) to "
+        f"~{warm_p50_ms} ms (warm cache) — a <b>{lat_reduction:.0f}× latency reduction</b> for repeated prompts.",
+        f"Cache hit rate reached <b>{final_hit_rate:.0f}% cumulative</b> after {snaps[-1]['requests_so_far']} "
+        f"requests under a realistic 40% unique-prompt workload.",
+        f"System remained stable with zero errors across {tp_high['total_requests']} concurrent requests "
+        f"(high-load throughput scenario, {tp_high_rps:.1f} req/s).",
     ]
     for f in findings:
         story.append(Paragraph(f"• {f}", body))
@@ -404,9 +442,9 @@ def build_performance_report(figs: dict) -> Path:
         "The transformer forward pass has a fixed base cost (kernel launch, attention "
         "matrix setup) shared across all sequences in a batch. When B requests are "
         "processed together, the base cost is amortised over B, reducing per-request "
-        "latency from <i>T_base + T_per</i> to <i>(T_base + B × T_per × α) / B</i>, "
-        "where α &lt; 1 is the GPU parallelism factor. At B=8 and α=0.4, per-request "
-        "latency drops ~4.5× relative to B=1.",
+        f"latency from <i>T_base + T_per</i> to <i>(T_base + B × T_per × α) / B</i>, "
+        f"where α &lt; 1 is the GPU parallelism factor. At B={c_max} and α=0.4, "
+        f"throughput improves {batch_gain:.1f}× relative to B=1.",
         body,
     ))
     story.append(Spacer(1, 0.05 * inch))
@@ -415,9 +453,9 @@ def build_performance_report(figs: dict) -> Path:
         "Identical or semantically equivalent prompts (FAQ responses, template "
         "expansions, repeated API calls) produce identical outputs. Caching stores "
         "the SHA-256–keyed response in an ordered dictionary; a subsequent cache "
-        "hit requires only a dictionary lookup (~0.5 ms) rather than a full forward "
-        "pass (~100–230 ms). At 64% hit rate, effective system throughput more than "
-        "doubles without additional GPU resources.",
+        f"hit requires only a dictionary lookup (~0.5 ms) rather than a full forward "
+        f"pass (~{cold_p50_ms} ms). At {final_hit_rate:.0f}% hit rate, effective system "
+        f"throughput improves {tput_improvement:.1f}× without additional GPU resources.",
         body,
     ))
     story.append(Spacer(1, 0.1 * inch))
@@ -466,18 +504,19 @@ def build_performance_report(figs: dict) -> Path:
     story.append(Paragraph("4. Caching Analysis", h1))
     story.append(img(figs["fig4"]))
     story.append(Paragraph(
-        "Figure 3. Cold cache: all requests require full inference (~227 ms p50, "
-        "~36 req/s). Warm cache: repeated prompts return in ~12 ms p50 (~175 req/s), "
-        "a 19× latency improvement and 4.9× throughput improvement.",
+        f"Figure 3. Cold cache: all requests require full inference (~{cold_p50_ms} ms p50, "
+        f"~{cold_rps_int} req/s). Warm cache: repeated prompts return in ~{warm_p50_ms} ms p50 "
+        f"(~{warm_rps_int} req/s), a {lat_reduction:.0f}× latency improvement and "
+        f"{tput_improvement:.0f}× throughput improvement.",
         caption,
     ))
     story.append(Spacer(1, 0.1 * inch))
 
     story.append(img(figs["fig3"]))
     story.append(Paragraph(
-        "Figure 4. Cache hit rate builds over time under a 40% unique-prompt workload. "
-        "Cumulative hit rate stabilises around 64%, with p50 latency dropping from "
-        "~200 ms to &lt;10 ms as the cache warms.",
+        f"Figure 4. Cache hit rate builds over time under a 40% unique-prompt workload. "
+        f"Cumulative hit rate stabilises around {final_hit_rate:.0f}%, with p50 latency "
+        f"dropping from ~{first_p50_lat:.0f} ms to &lt;10 ms as the cache warms.",
         caption,
     ))
     story.append(Spacer(1, 0.1 * inch))
@@ -496,10 +535,10 @@ def build_performance_report(figs: dict) -> Path:
     story.append(Paragraph("5. System Throughput Under Load", h1))
     story.append(img(figs["fig2"]))
     story.append(Paragraph(
-        "Figure 6. Throughput scales from 22.6 req/s (low load, c=4) to "
-        "134.2 req/s (high load, c=32). p50 latency remains stable (~200–225 ms) "
-        "because batching fully absorbs the increased concurrency. Zero errors "
-        "were observed across all load levels.",
+        f"Figure 6. Throughput scales from {tp_low_rps:.1f} req/s (low load, c={tp_low_c}) to "
+        f"{tp_high_rps:.1f} req/s (high load, c={tp_high_c}). p50 latency remains stable "
+        f"(~{tp_p50_min:.0f}–{tp_p50_max:.0f} ms) because batching fully absorbs the increased "
+        f"concurrency. Zero errors were observed across all load levels.",
         caption,
     ))
     story.append(Spacer(1, 0.1 * inch))

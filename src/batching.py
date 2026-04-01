@@ -16,8 +16,6 @@ Concurrency safety:
   - asyncio.Future objects are used to return results to each waiting coroutine.
 """
 import asyncio
-import random
-import time
 from dataclasses import dataclass, field
 from typing import Any, List, Optional, Tuple
 
@@ -51,63 +49,6 @@ class BatchStats:
         if self.total_batches == 0:
             return 0.0
         return self.total_requests / self.total_batches
-
-
-# ---------------------------------------------------------------------------
-# Simulated LLM inference
-# ---------------------------------------------------------------------------
-
-async def _simulate_inference(
-    requests: List[InferenceRequest],
-    config: ServerConfig,
-) -> List[InferenceResult]:
-    """
-    Simulate GPU-based LLM inference with realistic batching amortisation.
-
-    Latency model (mirrors real GPU behaviour):
-        total_batch_time = base_latency
-                         + sum_i(per_request_latency * amortisation_factor)
-
-    This captures:
-      - base_latency: fixed GPU kernel launch + attention matrix setup cost
-        shared across ALL requests in the batch.
-      - per_request_latency * factor: marginal cost per request, reduced by
-        the amortisation factor to model parallel GPU execution.
-
-    Per-request latency = total_batch_time / batch_size, which decreases
-    as batch size grows — the core throughput benefit of batching.
-    """
-    n = len(requests)
-    base_ms = config.base_inference_latency_ms
-    per_ms = config.per_request_latency_ms
-    factor = config.batch_amortization_factor
-
-    total_ms = base_ms + n * per_ms * factor
-    # ±10 % jitter to model realistic variance
-    jitter = random.uniform(0.90, 1.10)
-    total_ms *= jitter
-
-    t0 = time.perf_counter()
-    await asyncio.sleep(total_ms / 1000.0)
-    elapsed_ms = (time.perf_counter() - t0) * 1000.0
-    per_request_ms = elapsed_ms / n
-
-    results = []
-    for req in requests:
-        tokens = max(10, int(len(req.prompt.split()) * 2.5))
-        results.append(
-            InferenceResult(
-                text=(
-                    f"[{req.model_name}] Response to: \"{req.prompt[:60]}"
-                    f"{'...' if len(req.prompt) > 60 else ''}\" "
-                    f"— {tokens} tokens generated."
-                ),
-                tokens_generated=tokens,
-                inference_latency_ms=round(per_request_ms, 2),
-                batch_size=n,
-            )
-        )
-    return results
 
 
 # ---------------------------------------------------------------------------
@@ -233,7 +174,8 @@ class DynamicBatcher:
         )
 
         try:
-            results = await _simulate_inference(requests, self._config)
+            from src.inference import simulate_inference
+            results = await simulate_inference(requests, self._config)
             for fut, result in zip(futures, results):
                 if not fut.done():
                     fut.set_result(result)

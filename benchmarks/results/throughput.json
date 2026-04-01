@@ -7,22 +7,22 @@
       "total_requests": 10,
       "successful": 10,
       "failed": 0,
-      "duration_seconds": 0.444,
-      "throughput_rps": 22.55,
+      "duration_seconds": 0.615,
+      "throughput_rps": 16.25,
       "latency_ms": {
-        "mean": 173.68,
-        "p50": 208.89,
-        "p95": 227.85,
-        "p99": 227.85,
-        "min": 2.04,
-        "max": 227.85
+        "mean": 191.41,
+        "p50": 206.09,
+        "p95": 230.98,
+        "p99": 230.98,
+        "min": 8.74,
+        "max": 230.98
       },
       "cache": {
-        "hits": 2,
-        "misses": 8,
-        "hit_rate": 0.2
+        "hits": 1,
+        "misses": 9,
+        "hit_rate": 0.1
       },
-      "avg_batch_size": 4.0,
+      "avg_batch_size": 3.7,
       "load_level": "low"
     },
     {
@@ -30,20 +30,20 @@
       "total_requests": 50,
       "successful": 50,
       "failed": 0,
-      "duration_seconds": 0.714,
-      "throughput_rps": 70.07,
+      "duration_seconds": 0.679,
+      "throughput_rps": 73.69,
       "latency_ms": {
-        "mean": 176.87,
-        "p50": 221.98,
-        "p95": 245.11,
-        "p99": 249.83,
-        "min": 3.21,
-        "max": 249.83
+        "mean": 166.39,
+        "p50": 219.67,
+        "p95": 260.44,
+        "p99": 295.22,
+        "min": 3.7,
+        "max": 295.22
       },
       "cache": {
-        "hits": 12,
-        "misses": 38,
-        "hit_rate": 0.24
+        "hits": 16,
+        "misses": 34,
+        "hit_rate": 0.32
       },
       "avg_batch_size": 7.76,
       "load_level": "medium"
@@ -53,20 +53,20 @@
       "total_requests": 100,
       "successful": 100,
       "failed": 0,
-      "duration_seconds": 0.745,
-      "throughput_rps": 134.18,
+      "duration_seconds": 0.744,
+      "throughput_rps": 134.39,
       "latency_ms": {
-        "mean": 171.68,
-        "p50": 224.63,
-        "p95": 268.09,
-        "p99": 274.73,
-        "min": 2.03,
-        "max": 274.73
+        "mean": 177.0,
+        "p50": 221.25,
+        "p95": 257.35,
+        "p99": 261.12,
+        "min": 7.34,
+        "max": 261.12
       },
       "cache": {
-        "hits": 29,
-        "misses": 71,
-        "hit_rate": 0.29
+        "hits": 27,
+        "misses": 73,
+        "hit_rate": 0.27
       },
       "avg_batch_size": 7.93,
       "load_level": "high"

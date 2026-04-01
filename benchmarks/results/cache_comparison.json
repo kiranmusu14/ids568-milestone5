@@ -6,42 +6,42 @@
     "total_requests": 50,
     "successful": 50,
     "failed": 0,
-    "duration_seconds": 1.398,
-    "throughput_rps": 35.77,
+    "duration_seconds": 1.359,
+    "throughput_rps": 36.78,
     "latency_ms": {
-      "mean": 214.91,
-      "p50": 227.22,
-      "p95": 239.06,
-      "p99": 239.99,
-      "min": 1.48,
-      "max": 239.99
+      "mean": 203.73,
+      "p50": 221.16,
+      "p95": 232.1,
+      "p99": 235.37,
+      "min": 7.26,
+      "max": 235.37
     },
     "cache": {
-      "hits": 3,
-      "misses": 47,
-      "hit_rate": 0.06
+      "hits": 4,
+      "misses": 46,
+      "hit_rate": 0.08
     },
-    "avg_batch_size": 7.86
+    "avg_batch_size": 7.76
   },
   "warm": {
     "scenario": "cache_warm",
     "total_requests": 50,
     "successful": 50,
     "failed": 0,
-    "duration_seconds": 0.286,
-    "throughput_rps": 174.69,
+    "duration_seconds": 0.094,
+    "throughput_rps": 531.82,
     "latency_ms": {
-      "mean": 43.92,
-      "p50": 12.01,
-      "p95": 204.84,
-      "p99": 205.47,
-      "min": 5.82,
-      "max": 205.47
+      "mean": 12.81,
+      "p50": 11.47,
+      "p95": 26.54,
+      "p99": 34.01,
+      "min": 6.57,
+      "max": 34.01
     },
     "cache": {
-      "hits": 42,
-      "misses": 8,
-      "hit_rate": 0.84
+      "hits": 50,
+      "misses": 0,
+      "hit_rate": 1.0
     },
     "avg_batch_size": 8.0
   },
@@ -50,21 +50,21 @@
     "total_requests": 100,
     "successful": 100,
     "failed": 0,
-    "duration_seconds": 0.914,
-    "throughput_rps": 109.41,
+    "duration_seconds": 0.736,
+    "throughput_rps": 135.86,
     "latency_ms": {
-      "mean": 61.71,
-      "p50": 10.83,
-      "p95": 236.84,
-      "p99": 268.59,
+      "mean": 49.13,
+      "p50": 7.39,
+      "p95": 237.01,
+      "p99": 290.01,
       "min": 0.91,
-      "max": 268.59
+      "max": 290.01
     },
     "cache": {
-      "hits": 74,
-      "misses": 26,
-      "hit_rate": 0.74
+      "hits": 81,
+      "misses": 19,
+      "hit_rate": 0.81
     },
-    "avg_batch_size": 7.88
+    "avg_batch_size": 7.85
   }
 }

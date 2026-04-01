@@ -18,30 +18,11 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
 
 from src.batching import DynamicBatcher, InferenceRequest
 from src.caching import InferenceCache
 from src.config import config
-
-
-# ---------------------------------------------------------------------------
-# Request / Response schemas
-# ---------------------------------------------------------------------------
-
-class GenerateRequest(BaseModel):
-    prompt: str = Field(..., min_length=1, max_length=4096)
-    max_tokens: int = Field(default=256, ge=1, le=2048)
-    temperature: float = Field(default=0.7, ge=0.0, le=2.0)
-
-
-class GenerateResponse(BaseModel):
-    response: str
-    cached: bool
-    batch_size: int
-    latency_ms: float
-    tokens_generated: int
-    model: str
+from src.models import GenerateRequest, GenerateResponse
 
 
 # ---------------------------------------------------------------------------
