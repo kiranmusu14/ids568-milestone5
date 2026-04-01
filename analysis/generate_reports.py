@@ -745,7 +745,7 @@ if __name__ == "__main__":
     }
 
     print("\nBuilding performance_report.pdf...")
-    build_performance_report(figs)
+    build_performance_report(figs, batch_data, cache_data, hitrate_data, throughput_data)
 
     print("\nBuilding governance_memo.pdf...")
     build_governance_memo()
