@@ -1,0 +1,75 @@
+{
+  "scenario": "cache_hitrate",
+  "snapshots": [
+    {
+      "batch": 1,
+      "requests_so_far": 20,
+      "hit_rate_batch": 0.45,
+      "hit_rate_cumulative": 0.45,
+      "latency_p50": 198.69
+    },
+    {
+      "batch": 2,
+      "requests_so_far": 40,
+      "hit_rate_batch": 0.6,
+      "hit_rate_cumulative": 0.525,
+      "latency_p50": 9.62
+    },
+    {
+      "batch": 3,
+      "requests_so_far": 60,
+      "hit_rate_batch": 0.6,
+      "hit_rate_cumulative": 0.55,
+      "latency_p50": 9.69
+    },
+    {
+      "batch": 4,
+      "requests_so_far": 80,
+      "hit_rate_batch": 0.65,
+      "hit_rate_cumulative": 0.575,
+      "latency_p50": 9.64
+    },
+    {
+      "batch": 5,
+      "requests_so_far": 100,
+      "hit_rate_batch": 0.7,
+      "hit_rate_cumulative": 0.6,
+      "latency_p50": 7.61
+    },
+    {
+      "batch": 6,
+      "requests_so_far": 120,
+      "hit_rate_batch": 0.6,
+      "hit_rate_cumulative": 0.6,
+      "latency_p50": 9.52
+    },
+    {
+      "batch": 7,
+      "requests_so_far": 140,
+      "hit_rate_batch": 0.65,
+      "hit_rate_cumulative": 0.6071,
+      "latency_p50": 9.39
+    },
+    {
+      "batch": 8,
+      "requests_so_far": 160,
+      "hit_rate_batch": 0.65,
+      "hit_rate_cumulative": 0.6125,
+      "latency_p50": 4.16
+    },
+    {
+      "batch": 9,
+      "requests_so_far": 180,
+      "hit_rate_batch": 0.75,
+      "hit_rate_cumulative": 0.6278,
+      "latency_p50": 3.14
+    },
+    {
+      "batch": 10,
+      "requests_so_far": 200,
+      "hit_rate_batch": 0.75,
+      "hit_rate_cumulative": 0.64,
+      "latency_p50": 8.3
+    }
+  ]
+}

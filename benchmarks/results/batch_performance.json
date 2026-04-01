@@ -1,0 +1,121 @@
+{
+  "scenario": "batch",
+  "description": "Batching benefit: per-request latency vs. concurrency level",
+  "results": [
+    {
+      "scenario": "batch_concurrency_1",
+      "total_requests": 40,
+      "successful": 40,
+      "failed": 0,
+      "duration_seconds": 6.095,
+      "throughput_rps": 6.56,
+      "latency_ms": {
+        "mean": 152.07,
+        "p50": 166.27,
+        "p95": 181.09,
+        "p99": 181.24,
+        "min": 3.43,
+        "max": 181.24
+      },
+      "cache": {
+        "hits": 4,
+        "misses": 36,
+        "hit_rate": 0.1
+      },
+      "avg_batch_size": 1.0,
+      "concurrency": 1
+    },
+    {
+      "scenario": "batch_concurrency_2",
+      "total_requests": 40,
+      "successful": 40,
+      "failed": 0,
+      "duration_seconds": 3.367,
+      "throughput_rps": 11.88,
+      "latency_ms": {
+        "mean": 167.37,
+        "p50": 184.97,
+        "p95": 193.7,
+        "p99": 195.38,
+        "min": 3.41,
+        "max": 195.38
+      },
+      "cache": {
+        "hits": 4,
+        "misses": 36,
+        "hit_rate": 0.1
+      },
+      "avg_batch_size": 2.0,
+      "concurrency": 2
+    },
+    {
+      "scenario": "batch_concurrency_4",
+      "total_requests": 40,
+      "successful": 40,
+      "failed": 0,
+      "duration_seconds": 1.892,
+      "throughput_rps": 21.14,
+      "latency_ms": {
+        "mean": 174.23,
+        "p50": 207.47,
+        "p95": 224.46,
+        "p99": 225.31,
+        "min": 5.79,
+        "max": 225.31
+      },
+      "cache": {
+        "hits": 7,
+        "misses": 33,
+        "hit_rate": 0.175
+      },
+      "avg_batch_size": 3.92,
+      "concurrency": 4
+    },
+    {
+      "scenario": "batch_concurrency_8",
+      "total_requests": 40,
+      "successful": 40,
+      "failed": 0,
+      "duration_seconds": 1.149,
+      "throughput_rps": 34.81,
+      "latency_ms": {
+        "mean": 201.71,
+        "p50": 231.91,
+        "p95": 244.61,
+        "p99": 245.77,
+        "min": 3.65,
+        "max": 245.77
+      },
+      "cache": {
+        "hits": 5,
+        "misses": 35,
+        "hit_rate": 0.125
+      },
+      "avg_batch_size": 7.62,
+      "concurrency": 8
+    },
+    {
+      "scenario": "batch_concurrency_16",
+      "total_requests": 40,
+      "successful": 40,
+      "failed": 0,
+      "duration_seconds": 0.71,
+      "throughput_rps": 56.35,
+      "latency_ms": {
+        "mean": 217.52,
+        "p50": 226.92,
+        "p95": 250.93,
+        "p99": 250.93,
+        "min": 18.09,
+        "max": 250.93
+      },
+      "cache": {
+        "hits": 2,
+        "misses": 38,
+        "hit_rate": 0.05
+      },
+      "avg_batch_size": 7.7,
+      "concurrency": 16
+    }
+  ]
+}

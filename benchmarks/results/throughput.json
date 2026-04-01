@@ -1,0 +1,75 @@
+{
+  "scenario": "throughput",
+  "description": "Throughput (req/s) at low / medium / high concurrency",
+  "results": [
+    {
+      "scenario": "throughput_low",
+      "total_requests": 10,
+      "successful": 10,
+      "failed": 0,
+      "duration_seconds": 0.444,
+      "throughput_rps": 22.55,
+      "latency_ms": {
+        "mean": 173.68,
+        "p50": 208.89,
+        "p95": 227.85,
+        "p99": 227.85,
+        "min": 2.04,
+        "max": 227.85
+      },
+      "cache": {
+        "hits": 2,
+        "misses": 8,
+        "hit_rate": 0.2
+      },
+      "avg_batch_size": 4.0,
+      "load_level": "low"
+    },
+    {
+      "scenario": "throughput_medium",
+      "total_requests": 50,
+      "successful": 50,
+      "failed": 0,
+      "duration_seconds": 0.714,
+      "throughput_rps": 70.07,
+      "latency_ms": {
+        "mean": 176.87,
+        "p50": 221.98,
+        "p95": 245.11,
+        "p99": 249.83,
+        "min": 3.21,
+        "max": 249.83
+      },
+      "cache": {
+        "hits": 12,
+        "misses": 38,
+        "hit_rate": 0.24
+      },
+      "avg_batch_size": 7.76,
+      "load_level": "medium"
+    },
+    {
+      "scenario": "throughput_high",
+      "total_requests": 100,
+      "successful": 100,
+      "failed": 0,
+      "duration_seconds": 0.745,
+      "throughput_rps": 134.18,
+      "latency_ms": {
+        "mean": 171.68,
+        "p50": 224.63,
+        "p95": 268.09,
+        "p99": 274.73,
+        "min": 2.03,
+        "max": 274.73
+      },
+      "cache": {
+        "hits": 29,
+        "misses": 71,
+        "hit_rate": 0.29
+      },
+      "avg_batch_size": 7.93,
+      "load_level": "high"
+    }
+  ]
+}

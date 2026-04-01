@@ -1,0 +1,70 @@
+{
+  "scenario": "cache",
+  "description": "Cold vs. warm cache latency comparison",
+  "cold": {
+    "scenario": "cache_cold",
+    "total_requests": 50,
+    "successful": 50,
+    "failed": 0,
+    "duration_seconds": 1.398,
+    "throughput_rps": 35.77,
+    "latency_ms": {
+      "mean": 214.91,
+      "p50": 227.22,
+      "p95": 239.06,
+      "p99": 239.99,
+      "min": 1.48,
+      "max": 239.99
+    },
+    "cache": {
+      "hits": 3,
+      "misses": 47,
+      "hit_rate": 0.06
+    },
+    "avg_batch_size": 7.86
+  },
+  "warm": {
+    "scenario": "cache_warm",
+    "total_requests": 50,
+    "successful": 50,
+    "failed": 0,
+    "duration_seconds": 0.286,
+    "throughput_rps": 174.69,
+    "latency_ms": {
+      "mean": 43.92,
+      "p50": 12.01,
+      "p95": 204.84,
+      "p99": 205.47,
+      "min": 5.82,
+      "max": 205.47
+    },
+    "cache": {
+      "hits": 42,
+      "misses": 8,
+      "hit_rate": 0.84
+    },
+    "avg_batch_size": 8.0
+  },
+  "mixed": {
+    "scenario": "cache_mixed",
+    "total_requests": 100,
+    "successful": 100,
+    "failed": 0,
+    "duration_seconds": 0.914,
+    "throughput_rps": 109.41,
+    "latency_ms": {
+      "mean": 61.71,
+      "p50": 10.83,
+      "p95": 236.84,
+      "p99": 268.59,
+      "min": 0.91,
+      "max": 268.59
+    },
+    "cache": {
+      "hits": 74,
+      "misses": 26,
+      "hit_rate": 0.74
+    },
+    "avg_batch_size": 7.88
+  }
+}
