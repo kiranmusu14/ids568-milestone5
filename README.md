@@ -16,7 +16,7 @@ High-throughput LLM inference API with dynamic batching and caching.
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.9+
 - Redis (optional — default cache is in-memory)
 - GPU recommended for production; simulated backend works on CPU
 
@@ -49,8 +49,12 @@ All tunable parameters are read from environment variables with the `LLM_` prefi
 | `LLM_BATCH_TIMEOUT_MS` | `50.0` | Max wait (ms) to fill a batch |
 | `LLM_CACHE_TTL_SECONDS` | `300.0` | Cache entry time-to-live |
 | `LLM_CACHE_MAX_ENTRIES` | `1000` | Max LRU cache entries |
+| `LLM_BASE_INFERENCE_LATENCY_MS` | `100.0` | Fixed GPU kernel cost per batch (ms) |
+| `LLM_PER_REQUEST_LATENCY_MS` | `30.0` | Marginal latency added per request (ms) |
+| `LLM_BATCH_AMORTIZATION_FACTOR` | `0.4` | GPU parallelism factor (0–1) |
 | `LLM_HOST` | `0.0.0.0` | Bind address |
 | `LLM_PORT` | `8000` | Listen port |
+| `LLM_LOG_LEVEL` | `info` | Uvicorn log level |
 
 ---
 
@@ -160,7 +164,6 @@ ids568-milestone5/
 │   ├── governance_memo.pdf     # Governance considerations
 │   └── visualizations/         # Charts and graphs
 ├── requirements.txt
-├── pyproject.toml
 ├── .env.example
 └── README.md
 ```
@@ -172,23 +175,24 @@ ids568-milestone5/
 ```bash
 # .env.example - Copy to .env and customize
 
-# Model Configuration
-LLM_MODEL_NAME=meta-llama/Llama-2-7b-hf
-LLM_MAX_TOKENS=256
-LLM_TEMPERATURE=0.0
-
-# Batching Configuration
+# Batching
 LLM_MAX_BATCH_SIZE=8
-LLM_BATCH_TIMEOUT_MS=50
+LLM_BATCH_TIMEOUT_MS=50.0
 
-# Caching Configuration
-LLM_REDIS_URL=redis://localhost:6379
-LLM_CACHE_TTL_SECONDS=3600
-LLM_CACHE_MAX_ENTRIES=10000
+# Caching
+LLM_CACHE_TTL_SECONDS=300.0
+LLM_CACHE_MAX_ENTRIES=1000
 
-# Server Configuration
+# Simulated model
+LLM_MODEL_NAME=simulated-llm-7b
+LLM_BASE_INFERENCE_LATENCY_MS=100.0
+LLM_PER_REQUEST_LATENCY_MS=30.0
+LLM_BATCH_AMORTIZATION_FACTOR=0.4
+
+# Server
 LLM_HOST=0.0.0.0
 LLM_PORT=8000
+LLM_LOG_LEVEL=info
 ```
 
 ---
